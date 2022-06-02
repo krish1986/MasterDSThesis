@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[137]:
-
-
 import nibabel as nib
 import gzip
 import shutil
@@ -11,76 +5,56 @@ import matplotlib.pyplot as plt
 import numpy as np
 import nrrd
 import random
-from niwidgets import NiftiWidget
+#from niwidgets import NiftiWidget
 import nilearn
 from nilearn.image import new_img_like, load_img
 import os
-
-
-# In[138]:
-
-
-#Constants
+import glob
 
 PANCREAS_LABEL= 8
-TUMOR_LABEL = 13
+TUMOR_LABEL = 20
 
-ORG_IMG_DIR = 'E:/users/KMN14/Thesis/Task07_Pancreas/Task07_Pancreas_mod/original_image'
-PRED_IMG_DIR = 'E:/users/KMN14/Thesis/nnUNet_Prediction_Results/Task501_PDAC'
-SAVE_IMG_DIR = 'E:/users/KMN14/Thesis/Task07_Pancreas/Task07_Pancreas_mod/merged_image'
-
-
-# In[139]:
-
+ORG_IMG_DIR = '/home/kris/MSD_original_labels_2/'
+PRED_IMG_DIR = '/home/kris/MSD_prediction_labels_2/'
+SAVE_IMG_DIR = '/home/kris/MSD_updated_labels_2/'
 
 def load_image(file_path):
     img = nib.load(file_path)
     data = img.get_fdata()
     return data, img
-
-
-# In[140]:
-
-
+	
 #Read original image in the folder
 original_file_paths = []
 os.chdir(ORG_IMG_DIR)
 for infile in glob.glob(os.path.join( '*.nii.gz')):
     original_file_paths.append(ORG_IMG_DIR + '/' + infile )
-
-
-# In[141]:
-
-
+    
+    
 #Read predicted image in the folder
 predicted_file_paths = []
 os.chdir(PRED_IMG_DIR)
 for infile in glob.glob(os.path.join( '*.nii.gz')):
     predicted_file_paths.append(PRED_IMG_DIR + '/' + infile )
-
-
-# In[142]:
-
-
+    
+    
 def merge_images(data_original, data_predicted):
-    merged = np.zeros((data_original.shape[0], data_original.shape[1],data_original.shape[2]))
+    merged = np.zeros((data_original.shape[0], data_original.shape[1],data_original.shape[2]),dtype=np.uint8)
     for i in range(0, data_original.shape[0]):
         for j in range(0, data_original.shape[1]):
             for k in range(0,data_original.shape[2]):
                 if data_original[i][j][k] == 1:
-                    merged[i][j][k] = 8
+                    merged[i][j][k] = PANCREAS_LABEL
                 elif data_original[i][j][k] == 2:
-                    merged[i][j][k] = 13
+                    merged[i][j][k] = TUMOR_LABEL
                 elif (data_predicted[i][j][k] == 1 or data_predicted[i][j][k] == 2 or data_predicted[i][j][k] == 3 or
                       data_predicted[i][j][k] == 4 or data_predicted[i][j][k] == 5 or data_predicted[i][j][k] == 6 or
                       data_predicted[i][j][k] == 7 or data_predicted[i][j][k] == 9 or data_predicted[i][j][k] == 10 or
-                      data_predicted[i][j][k] == 11 or data_predicted[i][j][k] == 12 or data_predicted[i][j][k] == 14):
+                      data_predicted[i][j][k] == 11 or data_predicted[i][j][k] == 12 or data_predicted[i][j][k] == 13 or
+                      data_predicted[i][j][k] == 14 or data_predicted[i][j][k] == 15 or data_predicted[i][j][k] == 16 or
+                      data_predicted[i][j][k] == 17 or data_predicted[i][j][k] == 18 or data_predicted[i][j][k] == 19 or
+                      data_predicted[i][j][k] == 21 or data_predicted[i][j][k] == 22 or data_predicted[i][j][k] == 23):
                     merged[i][j][k] = data_predicted[i][j][k]
     return merged
-
-
-# In[143]:
-
 
 def validate_merged_images(merged, original, merged_label, original_label):
     array_1 = original[original == original_label]
@@ -90,20 +64,11 @@ def validate_merged_images(merged, original, merged_label, original_label):
         return
     else:
         print('Original and Merged Arrays doesnt match')
-
-
-# In[144]:
-
-
+        
 def save_merged_images(merged, path, img):
     merged_image = nib.Nifti1Image(merged, img.affine, img.header)
     nib.save(merged_image, path)
     
-
-
-# In[145]:
-
-
 for i in range(0, len(original_file_paths)):
     if original_file_paths[i].split('/')[-1] == predicted_file_paths[i].split('/')[-1]:
         data_original, img_original = load_image(original_file_paths[i])
@@ -114,19 +79,6 @@ for i in range(0, len(original_file_paths)):
         save_merged_images(data_merged, SAVE_IMG_DIR+'/'+original_file_paths[i].split('/')[-1],img_original)
         print('Total Number of images processed: ', i+1)
     else:
-        print("Original and Predicted File names doesnt match")t
+        print("Original and Predicted File names doesnt match")
         print("Original File Name: ", original_file_paths[i].split('/')[-1])
-        print("Predicted File Name: ", predicted_file_paths[i].split('/')[-1])        
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
+        print("Predicted File Name: ", predicted_file_paths[i].split('/')[-1]) 
